@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}How it's built | FoundIt{% endblock %}
+{% block content %}
+<section class="wrap narrow">
+  <h1 class="page-title">How FoundIt is built</h1>
+  <p class="page-sub">A Flask app hosted on AWS with eight services. Refresh this page on the live site and watch the server below change as the load balancer switches between instances.</p>
+
+  <div class="live">
+    <h2>This page was served by</h2>
+    <dl>
+      <div><dt>Server</dt><dd>{{ server.host }}</dd></div>
+      <div><dt>Instance</dt><dd>{{ server.instance or 'Not on EC2' }}</dd></div>
+      <div><dt>Availability zone</dt><dd>{{ server.zone }}</dd></div>
+      <div><dt>Database</dt><dd>{{ db_mode }}</dd></div>
+      <div><dt>Photo storage</dt><dd>{{ storage_mode }}</dd></div>
+      <div><dt>Reports stored</dt><dd>{{ total }}</dd></div>
+    </dl>
+  </div>
+
+  <h2 class="section-title">What happens when someone posts a found item</h2>
+  <ol class="path">
+    <li><b>Application Load Balancer</b><span>Receives the request and sends it to whichever EC2 instance is healthy, checking each one at <code>/health</code>.</span></li>
+    <li><b>EC2</b><span>Two instances in different availability zones run the Flask app with gunicorn. If one stops, the other keeps the site up.</span></li>
+    <li><b>S3</b><span>The photo is uploaded to the <code>uploads/</code> folder of the bucket. The app never stores AWS keys; the EC2 IAM role grants access.</span></li>
+    <li><b>RDS (MySQL)</b><span>The report is saved in the <code>reports</code> table. The database sits in private subnets and only accepts connections from the web servers.</span></li>
+    <li><b>Lambda</b><span>The new object in S3 triggers a function that logs the upload's details (file, size, time) without any server to manage.</span></li>
+    <li><b>CloudWatch</b><span>Collects the Lambda logs and EC2, load balancer and RDS metrics, shows them on a dashboard, and emails an alarm if CPU goes above 70%.</span></li>
+  </ol>
+
+  <h2 class="section-title">Around everything</h2>
+  <div class="around">
+    <div><b>VPC</b><p>One private network across two availability zones: public subnets for the load balancer and web servers, private subnets for the database. Security groups chain load balancer → web servers → database.</p></div>
+    <div><b>IAM</b><p>Roles for EC2 and Lambda with only the permissions they need, and separate IAM users for each team member instead of the root account.</p></div>
+  </div>
+</section>
+{% endblock %}

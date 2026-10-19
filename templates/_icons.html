@@ -1,0 +1,56 @@
+{% macro cat_icon(cat) -%}
+<svg class="cat-icon" viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+{%- if cat == 'electronics' -%}
+  <rect x="14" y="6" width="20" height="36" rx="4"/><path d="M21 36h6"/>
+{%- elif cat == 'id-keys' -%}
+  <circle cx="16" cy="24" r="8"/><path d="M24 24h18M36 24v6M41 24v4"/>
+{%- elif cat == 'books' -%}
+  <path d="M8 10h12a4 4 0 0 1 4 4v26a3 3 0 0 0-3-3H8zM40 10H28a4 4 0 0 0-4 4v26a3 3 0 0 1 3-3h13z"/>
+{%- elif cat == 'bottles' -%}
+  <path d="M20 4h8v6l3 5v25a4 4 0 0 1-4 4h-6a4 4 0 0 1-4-4V15l3-5z"/><path d="M17 22h14"/>
+{%- elif cat == 'bags' -%}
+  <rect x="9" y="16" width="30" height="26" rx="5"/><path d="M18 16v-4a6 6 0 0 1 12 0v4M9 26h30"/>
+{%- elif cat == 'wallets' -%}
+  <rect x="7" y="12" width="34" height="26" rx="4"/><path d="M41 20H31a5 5 0 0 0 0 10h10"/><circle cx="32" cy="25" r="1.2" fill="currentColor"/>
+{%- else -%}
+  <circle cx="24" cy="24" r="16"/><path d="M19 19a5 5 0 1 1 7 4.6c-1.3.6-2 1.6-2 3V28M24 34v.5"/>
+{%- endif -%}
+</svg>
+{%- endmacro %}
+
+{% macro pin() -%}
+<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+{%- endmacro %}
+
+{% macro cal() -%}
+<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+{%- endmacro %}
+
+{% macro search() -%}
+<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+{%- endmacro %}
+
+{% macro tag_logo() -%}
+<svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 3h12l7 7v19H3V10z" fill="var(--hivis)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="10" r="2.6" fill="var(--board)" stroke="var(--ink)" stroke-width="2"/></svg>
+{%- endmacro %}
+
+{% macro tag_card(it) -%}
+<a class="tag tag--{{ it.kind }}{% if it.status == 'returned' %} is-returned{% endif %}" href="{{ url_for('item', report_id=it.id) }}">
+  <span class="tag-face">
+  <span class="tag-hole" aria-hidden="true"></span>
+  <span class="tag-head">
+    <span class="tag-kind">{{ KINDS[it.kind] }}</span>
+    <span class="tag-no">No. {{ it.id|tagno }}</span>
+  </span>
+  <span class="tag-photo">
+    {% if it.image_url %}<img src="{{ it.image_url }}" alt="" loading="lazy">{% else %}{{ cat_icon(it.category) }}{% endif %}
+    {% if it.status == 'returned' %}<span class="stamp stamp--sm">Returned</span>{% endif %}
+  </span>
+  <span class="tag-body">
+    <span class="tag-title">{{ it.title }}</span>
+    <span class="tag-meta">{{ pin() }}{{ it.location }}</span>
+    <span class="tag-meta">{{ cal() }}{{ it.event_date|nicedate }}</span>
+  </span>
+  </span>
+</a>
+{%- endmacro %}

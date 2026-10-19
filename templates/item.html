@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_icons.html" import tag_card, cat_icon, pin, cal with context %}
+{% block title %}{{ item.title }} | FoundIt{% endblock %}
+{% block content %}
+<section class="wrap">
+  <a class="back" href="{{ url_for('index') }}">Back to the board</a>
+
+  {% if new_code %}
+  <div class="code-slip" role="status">
+    <div>
+      <h2>Posted. Keep this code.</h2>
+      <p>You'll need it to mark this item as returned. It's shown only once, so screenshot it or write it down.</p>
+    </div>
+    <p class="code" aria-label="Your code">{{ new_code }}</p>
+  </div>
+  {% endif %}
+
+  <article class="detail detail--{{ item.kind }}{% if item.status == 'returned' %} is-returned{% endif %}">
+    <div class="detail-photo">
+      {% if item.image_url %}<img src="{{ item.image_url }}" alt="Photo of {{ item.title }}">{% else %}{{ cat_icon(item.category) }}<span class="no-photo">No photo added</span>{% endif %}
+      {% if item.status == 'returned' %}<span class="stamp stamp--lg">Returned</span>{% endif %}
+    </div>
+
+    <div class="detail-info">
+      <p class="detail-kind"><span class="pill pill--{{ item.kind }}">{{ KINDS[item.kind] }}</span> <span class="tag-no">No. {{ item.id|tagno }}</span></p>
+      <h1>{{ item.title }}</h1>
+      <ul class="facts">
+        <li>{{ pin() }}{{ item.location }}</li>
+        <li>{{ cal() }}{{ 'Lost' if item.kind == 'lost' else 'Found' }} {{ item.event_date.strftime('%d %b %Y') }}</li>
+        <li>{{ cat_icon(item.category) }}{{ CATEGORIES[item.category] }}</li>
+      </ul>
+      {% if item.description %}<p class="desc">{{ item.description }}</p>{% endif %}
+
+      {% if item.status == 'open' %}
+      <div class="contact">
+        <h2>{{ 'Have it? Contact' if item.kind == 'lost' else "Is it yours? Contact" }} {{ item.contact_name }}</h2>
+        <p class="contact-info">{{ item.contact_info }}</p>
+        <p class="hint">{{ 'Describe where you found it so they know it is theirs.' if item.kind == 'lost' else 'Be ready to describe something only the owner would know.' }}</p>
+      </div>
+
+      <details class="resolve">
+        <summary>I posted this. Mark it returned</summary>
+        <form method="post" action="{{ url_for('mark_returned', report_id=item.id) }}">
+          <label for="code">Your 6-character code</label>
+          <div class="resolve-row">
+            <input id="code" name="code" maxlength="6" autocomplete="off" required>
+            <button class="btn btn--ink btn--sm" type="submit">Mark returned</button>
+          </div>
+        </form>
+      </details>
+      {% else %}
+      <p class="closed">Back with its owner{% if item.resolved_at %} since {{ item.resolved_at.strftime('%d %b %Y') }}{% endif %}.</p>
+      {% endif %}
+    </div>
+  </article>
+
+  {% if item.status == 'open' %}
+  <section class="matches" aria-labelledby="m-title">
+    <h2 id="m-title">{{ 'Found items that could be this' if item.kind == 'lost' else 'Lost reports that could be this' }}</h2>
+    {% if matches %}
+      <p class="page-sub">Same category, within two weeks of {{ item.event_date.strftime('%d %b') }}. Same place shown first.</p>
+      <div class="tags tags--row">{% for m in matches %}{{ tag_card(m) }}{% endfor %}</div>
+    {% else %}
+      <p class="page-sub">No likely matches yet. New {{ 'found' if item.kind == 'lost' else 'lost' }} reports in {{ CATEGORIES[item.category]|lower }} will show up here.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</section>
+{% endblock %}

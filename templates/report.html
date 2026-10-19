@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Report an item | FoundIt{% endblock %}
+{% macro err(name) %}{% if errors.get(name) %}<span class="field-error" id="{{ name }}-err">{{ errors[name] }}</span>{% endif %}{% endmacro %}
+{% macro inv(name) %}{% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-err"{% endif %}{% endmacro %}
+{% block content %}
+<section class="wrap narrow">
+  <h1 class="page-title">Report an item</h1>
+  <p class="page-sub">It goes up on the board straight away. You'll get a private code to mark it returned later.</p>
+
+  {% if errors %}<p class="flash flash--error" role="alert">Fix the highlighted fields and submit again.</p>{% endif %}
+
+  <form class="form" method="post" enctype="multipart/form-data" novalidate>
+    <fieldset class="kind-pick">
+      <legend>What happened?</legend>
+      <label class="kind-opt kind-opt--lost">
+        <input type="radio" name="kind" value="lost" {% if form.get('kind') == 'lost' %}checked{% endif %}>
+        <span><b>I lost something</b><small>Others will see it and contact you if they have it.</small></span>
+      </label>
+      <label class="kind-opt kind-opt--found">
+        <input type="radio" name="kind" value="found" {% if form.get('kind') == 'found' %}checked{% endif %}>
+        <span><b>I found something</b><small>Post a photo so the owner recognises it.</small></span>
+      </label>
+      {{ err('kind') }}
+    </fieldset>
+
+    <label class="field">
+      <span class="label">What is it?</span>
+      <input type="text" name="title" maxlength="120" value="{{ form.get('title', '') }}" placeholder="Black Milton steel bottle" {{ inv('title') }}>
+      {{ err('title') }}
+    </label>
+
+    <div class="row">
+      <label class="field">
+        <span class="label">Category</span>
+        <select name="category" {{ inv('category') }}>
+          <option value="">Choose one</option>
+          {% for key, label in CATEGORIES.items() %}<option value="{{ key }}" {% if key == form.get('category') %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        {{ err('category') }}
+      </label>
+      <label class="field">
+        <span class="label">Where?</span>
+        <select name="location" {{ inv('location') }}>
+          <option value="">Choose a place</option>
+          {% for loc in LOCATIONS %}<option {% if loc == form.get('location') %}selected{% endif %}>{{ loc }}</option>{% endfor %}
+        </select>
+        {{ err('location') }}
+      </label>
+      <label class="field">
+        <span class="label">When?</span>
+        <input type="date" name="event_date" max="{{ today.isoformat() }}" value="{{ form.get('event_date') or today.isoformat() }}" {{ inv('event_date') }}>
+        {{ err('event_date') }}
+      </label>
+    </div>
+
+    <label class="field">
+      <span class="label">Details <em>optional</em></span>
+      <textarea name="description" rows="3" placeholder="Stickers, scratches, name written inside, which room or table...">{{ form.get('description', '') }}</textarea>
+    </label>
+
+    <div class="field">
+      <span class="label">Photo <em>needed for found items, max 5 MB</em></span>
+      <label class="drop" {{ inv('photo') }}>
+        <input type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp" id="photo">
+        <img id="preview" alt="" hidden>
+        <span id="drop-text">Choose a photo or drop it here</span>
+      </label>
+      {{ err('photo') }}
+    </div>
+
+    <div class="row">
+      <label class="field">
+        <span class="label">Your name</span>
+        <input type="text" name="contact_name" maxlength="80" value="{{ form.get('contact_name', '') }}" autocomplete="name" {{ inv('contact_name') }}>
+        {{ err('contact_name') }}
+      </label>
+      <label class="field">
+        <span class="label">Phone or email</span>
+        <input type="text" name="contact_info" maxlength="120" value="{{ form.get('contact_info', '') }}" {{ inv('contact_info') }}>
+        {{ err('contact_info') }}
+      </label>
+    </div>
+
+    <button class="btn btn--ink btn--lg" type="submit">Post to the board</button>
+  </form>
+</section>
+
+<script>
+  const input = document.getElementById('photo'), preview = document.getElementById('preview'), text = document.getElementById('drop-text');
+  input.addEventListener('change', () => {
+    const f = input.files[0];
+    if (!f) { preview.hidden = true; text.textContent = 'Choose a photo or drop it here'; return; }
+    preview.src = URL.createObjectURL(f); preview.hidden = false; text.textContent = f.name;
+  });
+</script>
+{% endblock %}

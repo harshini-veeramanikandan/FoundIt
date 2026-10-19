@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Not found | FoundIt{% endblock %}
+{% block content %}
+<section class="wrap narrow">
+  <div class="empty">
+    <h3>This tag isn't on the board</h3>
+    <p>The link may be wrong, or the report was removed.</p>
+    <a class="btn btn--ink" href="{{ url_for('index') }}">Go to the board</a>
+  </div>
+</section>
+{% endblock %}

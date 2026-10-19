@@ -1,0 +1,48 @@
+{% from "_icons.html" import tag_logo %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FoundIt: campus lost & found{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-head">
+    <div class="wrap head-inner">
+      <a class="logo" href="{{ url_for('index') }}">{{ tag_logo() }}<span>FoundIt</span></a>
+      <nav class="nav" aria-label="Main">
+        <a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>Browse</a>
+        <a href="{{ url_for('how_it_works') }}" {% if request.endpoint == 'how_it_works' %}aria-current="page"{% endif %}>How it's built</a>
+        <a class="btn btn--ink btn--sm" href="{{ url_for('report') }}">Report an item</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="wrap flashes">
+        {% for cat, msg in messages %}<p class="flash flash--{{ cat }}" role="status">{{ msg }}</p>{% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap foot-inner">
+      <p class="foot-note">FoundIt helps students get lost things back. Report it, check the board, meet on campus.</p>
+      <dl class="served">
+        <div><dt>This page came from</dt><dd><strong>{{ server.host }}</strong></dd></div>
+        <div><dt>Zone</dt><dd>{{ server.zone }}</dd></div>
+        <div><dt>Database</dt><dd>{{ db_mode }}</dd></div>
+        <div><dt>Photos</dt><dd>{{ storage_mode }}</dd></div>
+      </dl>
+    </div>
+  </footer>
+</body>
+</html>

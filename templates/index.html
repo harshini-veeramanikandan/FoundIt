@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_icons.html" import tag_card, search with context %}
+{% block content %}
+<section class="hero">
+  <div class="wrap hero-inner">
+    <div class="hero-copy">
+      <h1>Lost it on campus? Check the board first.</h1>
+      <p class="lede">
+        {% if returned_count %}{{ returned_count }} item{{ 's' if returned_count != 1 }} already made it back to {{ 'their owners' if returned_count != 1 else 'its owner' }}.
+        {% endif %}Search what people have handed in, or post what you're missing so the finder can reach you.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn--lost" href="{{ url_for('report', kind='lost') }}">I lost something</a>
+        <a class="btn btn--found" href="{{ url_for('report', kind='found') }}">I found something</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="string"></div>
+      <div class="mini-tag mini-tag--found"><div class="mini-face"><span class="mini-hole"></span><b>Found</b><i></i><i></i></div></div>
+      <div class="mini-tag mini-tag--lost"><div class="mini-face"><span class="mini-hole"></span><b>Lost</b><i></i><i></i></div></div>
+      <div class="mini-tag mini-tag--back"><div class="mini-face"><span class="mini-hole"></span><b>Found</b><i></i><i></i><span class="stamp">Returned</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap board" aria-labelledby="board-title">
+  <form class="filters" method="get" action="{{ url_for('index') }}" id="filters">
+    <h2 id="board-title" class="board-title">{{ open_count }} open report{{ 's' if open_count != 1 }}</h2>
+    <label class="search-field">
+      <span class="sr-only">Search reports</span>
+      {{ search() }}
+      <input type="search" name="q" value="{{ q }}" placeholder="Search: bottle, ID card, calculator...">
+    </label>
+    <fieldset class="segmented">
+      <legend class="sr-only">Show</legend>
+      {% for val, label in [('', 'Everything'), ('lost', 'Lost'), ('found', 'Found')] %}
+        <label><input type="radio" name="kind" value="{{ val }}" {% if kind == val %}checked{% endif %}><span>{{ label }}</span></label>
+      {% endfor %}
+    </fieldset>
+    <label class="select">
+      <span class="sr-only">Category</span>
+      <select name="category">
+        <option value="">Any category</option>
+        {% for key, label in CATEGORIES.items() %}<option value="{{ key }}" {% if key == category %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="select">
+      <span class="sr-only">Location</span>
+      <select name="location">
+        <option value="">Anywhere on campus</option>
+        {% for loc in LOCATIONS %}<option {% if loc == location %}selected{% endif %}>{{ loc }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" name="returned" value="1" {% if show_returned %}checked{% endif %}> Include returned</label>
+    <button class="btn btn--ink btn--sm" type="submit">Search</button>
+    {% if filtered %}<a class="clear" href="{{ url_for('index') }}">Clear</a>{% endif %}
+  </form>
+
+  {% if items %}
+    <div class="tags">
+      {% for it in items %}{{ tag_card(it) }}{% endfor %}
+    </div>
+  {% elif filtered %}
+    <div class="empty">
+      <h3>Nothing matches those filters</h3>
+      <p>Try a broader search, or post a report so the finder can contact you.</p>
+      <a class="btn btn--ink" href="{{ url_for('report', kind='lost') }}">Report a lost item</a>
+    </div>
+  {% else %}
+    <div class="empty">
+      <h3>The board is empty</h3>
+      <p>Found something on campus? Put it up here so its owner can find it.</p>
+      <a class="btn btn--found" href="{{ url_for('report', kind='found') }}">Report a found item</a>
+    </div>
+  {% endif %}
+</section>
+
+<script>
+  document.querySelectorAll('#filters select, #filters input[type=radio], #filters input[type=checkbox]')
+    .forEach(el => el.addEventListener('change', () => el.form.submit()));
+</script>
+{% endblock %}
