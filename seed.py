@@ -2,14 +2,17 @@
 Optional: fill the board with sample reports so the site doesn't look empty in a demo.
 Run once:  python seed.py
 Every sample report uses the code DEMO01 to mark it returned.
+Works with both the laptop database and DynamoDB (it uses the same settings as the app).
 """
 from datetime import date, datetime, timedelta
 
-from sqlalchemy import func, insert, select
+from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 
-from app import engine, reports
+load_dotenv()
+from storage import make_store  # noqa: E402
 
+store = make_store()
 today = date.today()
 code_hash = generate_password_hash("DEMO01")
 
@@ -26,16 +29,15 @@ samples = [
     ("found", "Wired earphones", "electronics", "Auditorium", 8, "White, found under row F after the club event.", "Divya", "divya@example.com", "returned"),
 ]
 
-with engine.begin() as conn:
-    if conn.execute(select(func.count()).select_from(reports)).scalar():
-        print("The board already has reports, so nothing was added.")
-    else:
-        for kind, title, cat, loc, ago, desc, name, contact, status in samples:
-            conn.execute(insert(reports).values(
-                kind=kind, title=title, category=cat, location=loc,
-                event_date=today - timedelta(days=ago), description=desc, image_url=None,
-                contact_name=name, contact_info=contact, status=status,
-                manage_code_hash=code_hash, created_at=datetime.now(),
-                resolved_at=datetime.now() if status == "returned" else None,
-            ))
-        print(f"Added {len(samples)} sample reports. Their code is DEMO01.")
+if store.counts()[2]:
+    print("The board already has reports, so nothing was added.")
+else:
+    for kind, title, cat, loc, ago, desc, name, contact, status in samples:
+        store.create(
+            kind=kind, title=title, category=cat, location=loc,
+            event_date=today - timedelta(days=ago), description=desc, image_url=None,
+            contact_name=name, contact_info=contact, status=status,
+            manage_code_hash=code_hash, created_at=datetime.now(),
+            resolved_at=datetime.now() if status == "returned" else None,
+        )
+    print(f"Added {len(samples)} sample reports. Their code is DEMO01.")

@@ -11,19 +11,21 @@ with a private 6-character code.
 
 | Feature | Where it uses AWS |
 |---|---|
-| Post a lost/found report with photo | Photo → S3, report → RDS |
-| Browse, search, filter by lost/found, category, place | RDS queries |
-| Likely matches on every item page | RDS query (opposite type, same category, ±14 days) |
-| Mark returned with a private code (stored hashed) | RDS update |
-| Footer and "How it's built" page show server name + availability zone | EC2 metadata, proves the load balancer works |
-| `/health` endpoint | ELB health check |
-| Photo upload triggers a function | S3 → Lambda → CloudWatch Logs |
+| Post a lost/found report with photo | Photo → S3, report → DynamoDB |
+| Browse, search, filter by lost/found, category, place | DynamoDB scan + filters |
+| Likely matches on every item page | Opposite type, same category, ±14 days |
+| Mark returned with a private code (stored hashed) | DynamoDB update |
+| Server name + availability zone in the footer | EC2 instance metadata |
+| Monitoring and email alarms | CloudWatch dashboard + alarms |
+| Firewall | VPC security group: port 80 open, SSH only from the team's IP |
+| No AWS keys in code | IAM role attached to the EC2 instance |
 
 ## Files
 
 ```
 foundit/
-├── app.py              # all backend logic
+├── app.py              # all backend logic (pages, validation, photo upload)
+├── storage.py          # database layer: DynamoDB on AWS, SQLite on a laptop
 ├── seed.py             # optional: adds 9 sample reports (code DEMO01)
 ├── requirements.txt
 ├── .env.example        # settings: laptop mode vs AWS mode
@@ -55,19 +57,15 @@ Open http://127.0.0.1:5001
 
 ## Run on AWS (EC2)
 
-In `.env`, comment out the laptop lines and fill in the AWS ones:
+The EC2 instance sets itself up from the user-data script in the setup prompt: it clones
+this repo, installs the requirements, writes a `.env` with
 
 ```
-DATABASE_URL=mysql+pymysql://admin:PASSWORD@RDS-ENDPOINT:3306/foundit
+DYNAMODB_TABLE=foundit-reports
 S3_BUCKET=foundit-photos-24bce1890
 AWS_REGION=ap-south-1
 ```
 
-Then run with gunicorn on port 80:
+and runs the app with gunicorn on port 80 as a systemd service.
 
-```
-sudo venv/bin/gunicorn -w 2 -b 0.0.0.0:80 app:app
-```
-
-No AWS keys are stored anywhere. On EC2, boto3 uses the IAM role attached to the
-instance. The `reports` table is created automatically on first start.
+No AWS keys are stored anywhere. On EC2, boto3 uses the IAM role attached to the instance.
